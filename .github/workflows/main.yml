@@ -32,7 +32,8 @@ jobs:
       - name: Install MLflow CLI and Core Dependencies
         shell: bash
         run: |
-          conda install -y -c conda-forge mlflow
+          # conda install -y -c conda-forge mlflow
+          pip install mlflow
 
       # Melatih Model (CI Retraining)
       # Menjalankan script modelling.py dan menyimpan model ke mlruns lokal
