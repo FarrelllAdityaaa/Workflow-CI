@@ -21,26 +21,24 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Setup Conda/Mamba dan Python (Diperlukan untuk menjalankan MLProject)
-      - name: Setup Conda/Mamba for MLflow Project
-        uses: conda-incubator/setup-miniconda@v2
+      # Setup Python 3.9
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
         with:
-          auto-update-conda: true
-          python-version: 3.9
+          python-version: '3.9'
 
       # Instal MLflow CLI dan dependencies
-      - name: Install MLflow CLI and Core Dependencies
-        shell: bash
+      - name: Install All Dependencies via PIP
         run: |
-          # conda install -y -c conda-forge mlflow
-          pip install mlflow
-
+          python -m pip install --upgrade pip
+          # Menginstal semua dependensi model dan MLflow CLI ke base environment
+          pip install pandas==2.2.2 numpy==1.26.4 scikit-learn==1.4.2 mlflow==2.13.0
+          
       # Melatih Model (CI Retraining)
       # Menjalankan script modelling.py dan menyimpan model ke mlruns lokal
       - name: Run MLflow Project (Training)
         run: |
-          # Flag --env-manager=conda membuat MLflow menggunakan environment dari conda.yaml
-          mlflow run MLProject --env-manager=conda 
+          mlflow run MLProject --env-manager=local
 
       # Log in ke Docker Hub
       - name: Log in to Docker Hub
