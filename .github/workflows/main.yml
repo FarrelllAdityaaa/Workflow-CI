@@ -24,47 +24,47 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      # 1. Kunci Versi Python ke 3.9 (Penting untuk kompatibilitas MLflow 2.13)
-      - name: Set up Python 3.9
+      # Versi python 3.10.10
+      - name: Set up Python 3.10.10
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.10.10"
 
-      # 2. Install Dependencies (Tambahkan library model)
+      # Install Dependencies (Tambahkan library model)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           # Instal MLflow CLI dan dependencies model ke base env
           pip install pandas==2.2.2 numpy==1.26.4 scikit-learn==1.4.2 mlflow==2.13.0
 
-      # 3. Run MLProject (menggunakan --env-manager=local)
+      # Run MLProject (menggunakan --env-manager=local)
       - name: Run mlflow project
         run: |
           # Menggunakan local environment, bergantung pada instalasi di Step 2
           mlflow run MLProject --env-manager=local
 
-      # 4. Get latest run_id (TIDAK PERLU DIUBAH, sudah umum)
+      # Get latest run_id
       - name: Get latest MLflow run_id
         run: |
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
           echo "Latest run_id: $RUN_ID"
 
-      # 5. Build Docker Model (Ubah nama image)
+      # Build Docker Model (Ubah nama image)
       - name: Build Docker Model
         run: |
-          # Ganti 'cc' menjadi nama image yang sesuai (misal: titanic-ci)
+          # Nama image misal: titanic-ci
           IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/titanic-ci:latest
           mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "$IMAGE_NAME"
 
-      # 6. Login to Docker Hub
+      # Login to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # 7. Push Docker Image
+      # Push Docker Image
       - name: Push Docker Image
         run: |
           IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/titanic-ci:latest
