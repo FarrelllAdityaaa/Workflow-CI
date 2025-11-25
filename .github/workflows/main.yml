@@ -50,7 +50,7 @@ jobs:
       # Build Docker Image
       - name: Build Docker Image from Run Artifact
         run: |
-
+          mkdir -p mlruns/0
           # Ambil Run ID terbaru dari folder mlruns lokal runner
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
           IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/titanic-ci:latest
