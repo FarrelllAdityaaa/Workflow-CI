@@ -55,7 +55,7 @@ jobs:
         run: |
           # Nama image misal: titanic-ci
           IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/titanic-ci:latest
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "$IMAGE_NAME"
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "$IMAGE_NAME" --base-image python:3.9
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
