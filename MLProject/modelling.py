@@ -1,25 +1,53 @@
-import pandas as pd
 import mlflow
-import mlflow.sklearn
-from sklearn.model_selection import train_test_split
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+import os
+import numpy as np
+import warnings
+import sys
 
-# Load Data
-df = pd.read_csv('titanic_preprocessing.csv')
-X = df.drop('Survived', axis=1)
-y = df['Survived']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
+    np.random.seed(42)
 
-with mlflow.start_run():
-    model = RandomForestClassifier(n_estimators=100)
-    model.fit(X_train, y_train)
-    print("Model Basic trained with Autolog.")
-
-    mlflow.sklearn.log_model(
-        sk_model=model,
-        artifact_path="model"
+    # Ambil path file (argumen ke-2) atau default 'titanic_preprocessing.csv'
+    file_path = (
+        sys.argv[2] 
+        if len(sys.argv) > 2 
+        else os.path.join(os.path.dirname(os.path.abspath(__file__)), "titanic_preprocessing.csv")
     )
-    print("Model logged to MLflow.")
 
-    accuracy = model.score(X_test, y_test)
-    mlflow.log_metric("accuracy", accuracy)
+    data = pd.read_csv(file_path)
+
+    # Split Titanic (target: Survived)
+    X_train, X_test, y_train, y_test = train_test_split(
+        data.drop("Survived", axis=1),
+        data["Survived"],
+        random_state=42,
+        test_size=0.2
+    )
+
+    # Input example untuk logging model
+    input_example = X_train.iloc[0:5]
+
+    # Hyperparameter tunggal: n_estimators
+    n_estimators = int(sys.argv[1]) if len(sys.argv) > 1 else 100
+
+    with mlflow.start_run():
+        model = RandomForestClassifier(
+            n_estimators=n_estimators,
+            random_state=42
+        )
+
+        model.fit(X_train, y_train)
+
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path="model",
+            input_example=input_example
+        )
+
+        # Log metric
+        accuracy = model.score(X_test, y_test)
+        mlflow.log_metric("accuracy", accuracy)
