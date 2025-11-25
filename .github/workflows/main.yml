@@ -1,0 +1,69 @@
+name: CI - Automated Retraining and Docker Build
+
+on:
+  push:
+    branches:
+      - main
+  # Opsi agar bisa dijalankan manual (diperlukan untuk debugging)
+  workflow_dispatch:
+
+jobs:
+  ci-mlops-build:
+    runs-on: ubuntu-latest
+    
+    # Izin untuk membaca kode dan push image ke registry (Docker Hub)
+    permissions:
+      contents: read
+      packages: write 
+
+    steps:
+      # Checkout repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Setup Conda/Mamba dan Python (Diperlukan untuk menjalankan MLProject)
+      - name: Setup Conda/Mamba for MLflow Project
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: 3.9
+
+      # Instal MLflow CLI dan dependencies
+      - name: Install MLflow CLI and Core Dependencies
+        shell: bash
+        run: |
+          conda install -y -c conda-forge mlflow
+          # Tambahkan libraries yang dibutuhkan modeling.py ke CI environment
+          pip install pandas numpy scikit-learn
+
+      # Melatih Model (CI Retraining)
+      # Menjalankan script modelling.py dan menyimpan model ke mlruns lokal
+      - name: Run MLflow Project (Training)
+        run: |
+          # Flag --env-manager=conda membuat MLflow menggunakan environment dari conda.yaml
+          mlflow run MLProject --env-manager=conda 
+
+      # Log in ke Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} # Ini adalah Access Token
+
+      # Build Docker Image
+      - name: Build Docker Image from Run Artifact
+        run: |
+          # Baris ini mengambil Run ID terbaru dari folder mlruns lokal runner
+          RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
+          IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/titanic-ci:latest
+          
+          echo "Latest Run ID found: $RUN_ID"
+          
+          # Build image menggunakan model dari Run ID lokal yang baru saja dibuat
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "$IMAGE_NAME"
+
+      # Push Image ke Docker Hub
+      - name: Push Docker Image to Hub
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/titanic-ci:latest
+          docker push $IMAGE_NAME
