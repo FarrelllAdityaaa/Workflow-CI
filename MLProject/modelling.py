@@ -10,16 +10,16 @@ X = df.drop('Survived', axis=1)
 y = df['Survived']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+with mlflow.start_run():
+    model = RandomForestClassifier(n_estimators=100)
+    model.fit(X_train, y_train)
+    print("Model Basic trained with Autolog.")
 
-model = RandomForestClassifier(n_estimators=100)
-model.fit(X_train, y_train)
-print("Model Basic trained with Autolog.")
+    mlflow.sklearn.log_model(
+        sk_model=model,
+        artifact_path="model"
+    )
+    print("Model logged to MLflow.")
 
-mlflow.sklearn.log_model(
-    sk_model=model,
-    artifact_path="model"
-)
-print("Model logged to MLflow.")
-
-accuracy = model.score(X_test, y_test)
-mlflow.log_metric("accuracy", accuracy)
+    accuracy = model.score(X_test, y_test)
+    mlflow.log_metric("accuracy", accuracy)
