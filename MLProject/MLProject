@@ -1,0 +1,7 @@
+name: Titanic-CI-Retrain
+conda_env: conda.yaml
+entry_points:
+  main:
+    # Perintah yang akan dijalankan oleh "mlflow run MLProject"
+    # Mengacu pada file modelling.py di folder yang sama
+    command: "python modelling.py"
