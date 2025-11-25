@@ -33,8 +33,6 @@ jobs:
         shell: bash
         run: |
           conda install -y -c conda-forge mlflow
-          # Tambahkan libraries yang dibutuhkan modeling.py ke CI environment
-          pip install pandas numpy scikit-learn
 
       # Melatih Model (CI Retraining)
       # Menjalankan script modelling.py dan menyimpan model ke mlruns lokal
